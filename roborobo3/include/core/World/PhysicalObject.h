@@ -24,6 +24,12 @@ protected :
     // coordinates (center of object)
     double _xReal;
     double _yReal;
+    bool _customInit;
+    double _initXmin;
+    double _initXmax;
+    double _initYmin;
+    double _initYmax;
+    int _switchGen;
     
     Uint8 _displayColorRed;
     Uint8 _displayColorGreen;
@@ -40,7 +46,7 @@ protected :
     void init();  // called by constructor only
     
 protected:
-    int findRandomLocation( );
+    int findRandomLocation( double ix=-1, double iy=-1 );
     void setType ( int __type ) { type = __type; }
     
 public :

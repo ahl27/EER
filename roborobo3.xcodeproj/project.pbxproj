@@ -35,7 +35,6 @@
 		376C24661E28BBA800E70850 /* TemplateMedeaWorldObserver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 376C24621E28BBA800E70850 /* TemplateMedeaWorldObserver.cpp */; };
 		37753A961ECB27EB0039BF21 /* MovableObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37753A951ECB27EB0039BF21 /* MovableObject.cpp */; };
 		37A9F91B1E28AA7E00006059 /* TemplateVanillaEEConfigurationLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37A9F91A1E28AA7E00006059 /* TemplateVanillaEEConfigurationLoader.cpp */; };
-		37BA26231BC3C7A9002DF5DC /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37BA26211BC3C7A9002DF5DC /* SDL2.framework */; };
 		37BA272F1BC3D014002DF5DC /* Elman.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37BA26DA1BC3D014002DF5DC /* Elman.cpp */; };
 		37BA27301BC3D014002DF5DC /* LayeredNeuralNetwork.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37BA26DB1BC3D014002DF5DC /* LayeredNeuralNetwork.cpp */; };
 		37BA27311BC3D014002DF5DC /* MLP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37BA26DC1BC3D014002DF5DC /* MLP.cpp */; };
@@ -74,7 +73,8 @@
 		37BA27581BC3D014002DF5DC /* RoundObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37BA27061BC3D014002DF5DC /* RoundObject.cpp */; };
 		37BA27591BC3D014002DF5DC /* SwitchObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37BA27071BC3D014002DF5DC /* SwitchObject.cpp */; };
 		37C810401E28AF1F00A71E6F /* TemplateMedeaConfigurationLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 37C8103F1E28AF1F00A71E6F /* TemplateMedeaConfigurationLoader.cpp */; };
-		37E870AA1E799B20003D6DD8 /* SDL2_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37E870A91E799B20003D6DD8 /* SDL2_image.framework */; };
+		89933A1021628F20003DD3BB /* SDL2_image.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89933A0F21628F20003DD3BB /* SDL2_image.framework */; };
+		89933A1121628F2A003DD3BB /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 37BA26211BC3C7A9002DF5DC /* SDL2.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -243,6 +243,7 @@
 		37C8103F1E28AF1F00A71E6F /* TemplateMedeaConfigurationLoader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TemplateMedeaConfigurationLoader.cpp; sourceTree = "<group>"; };
 		37C810411E28AF2700A71E6F /* TemplateMedeaConfigurationLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TemplateMedeaConfigurationLoader.h; sourceTree = "<group>"; };
 		37E870A91E799B20003D6DD8 /* SDL2_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_image.framework; path = ../../../../../../../../../../Volumes/SDL2_image/SDL2_image.framework; sourceTree = "<group>"; };
+		89933A0F21628F20003DD3BB /* SDL2_image.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2_image.framework; path = ../../../../../Library/Frameworks/SDL2_image.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -250,8 +251,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				37BA26231BC3C7A9002DF5DC /* SDL2.framework in Frameworks */,
-				37E870AA1E799B20003D6DD8 /* SDL2_image.framework in Frameworks */,
+				89933A1121628F2A003DD3BB /* SDL2.framework in Frameworks */,
+				89933A1021628F20003DD3BB /* SDL2_image.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -472,6 +473,7 @@
 				37BA26211BC3C7A9002DF5DC /* SDL2.framework */,
 				37E870A91E799B20003D6DD8 /* SDL2_image.framework */,
 				37BA26171BC3C782002DF5DC /* Products */,
+				89933A0E21628F20003DD3BB /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -765,6 +767,14 @@
 				37A9F91A1E28AA7E00006059 /* TemplateVanillaEEConfigurationLoader.cpp */,
 			);
 			path = ext;
+			sourceTree = "<group>";
+		};
+		89933A0E21628F20003DD3BB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				89933A0F21628F20003DD3BB /* SDL2_image.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

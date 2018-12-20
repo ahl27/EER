@@ -196,7 +196,7 @@ A last remark: roborobo! is not exactly the paragon of Clean Coding philosophy a
 
 ** DIRECTORY STRUCTURE **
 
-- prj    : project locations, each project is indenpendant, and may be seen as a special instance of roborobo - parameterized through ConfigurationLoader and .properties file.
+- prj    : project locations, each project is independent, and may be seen as a special instance of roborobo - parameterized through ConfigurationLoader and .properties file.
 - log    : log files.
 - data   : contains image files.
 - config : contains properties files.

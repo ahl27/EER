@@ -19,11 +19,39 @@ TemplateEEWorldObserver::TemplateEEWorldObserver( World* world ) : WorldObserver
     
     std::string litelogFullFilename = gLogDirectoryname + "/lite_" + gLogFilename;
     gLitelogFile.open(litelogFullFilename.c_str());
+
+    std::string pucksFullFilename = gPucksDirectoryname + "/" + gPucksFilename;
+    gPucksFile.open(pucksFullFilename.c_str());
+
+    std::string agentFullFilename = gAgentDirectoryname + "/" + gAgentFilename;
+    gAgentFile.open(agentFullFilename.c_str());
+
+    if(!gPucksFile) {
+        std::cout << "[CRITICAL] Cannot open \"pucks\" log file " << pucksFullFilename << "." << std::endl << std::endl;
+        exit(-1);
+    }
+
+    if(!gAgentFile) {
+        std::cout << "[CRITICAL] Cannot open \"pucks\" log file " << pucksFullFilename << "." << std::endl << std::endl;
+        exit(-1);
+    }
         
     if(!gLitelogFile) {
         std::cout << "[CRITICAL] Cannot open \"lite\" log file " << litelogFullFilename << "." << std::endl << std::endl;
         exit(-1);
     }
+
+    gPuckslogManager = new LogManager();
+    gPuckslogManager->setLogFile(gPucksFile);
+    gPuckslogManager->write("# pucks logger\n");
+    gPuckslogManager->write("# generation, total redpucks, total greenpucks.\n");
+    gPuckslogManager->flush();    
+
+    gAgentlogManager = new LogManager();
+    gAgentlogManager->setLogFile(gAgentFile);
+    gAgentlogManager->write("#Per agent: proportion red, total pucks, xcoord, ycoord, isAlive().\n");
+    gAgentlogManager->write("#Specialization reported as (numRed) / (numGreen + numRed)\n");
+    gAgentlogManager->flush();
         
     gLitelogManager = new LogManager();
     gLitelogManager->setLogFile(gLitelogFile);
@@ -175,6 +203,18 @@ void TemplateEEWorldObserver::monitorPopulation( bool localVerbose )
     double sumOfFitnesses = 0;
     double minFitness = DBL_MAX;
     double maxFitness = -DBL_MAX;
+    double maxRed[2] = {-1, -1};
+    double maxGreen[2] = {-1, -1};
+    double minRed[2] = {DBL_MAX, DBL_MAX};
+    double minGreen[2] = {DBL_MAX, DBL_MAX};
+    double totalRed = 0;
+    double totalGreen = 0;
+    double avgSpeed = 0;
+    double avgSpec = 0;
+
+    gAgentlogManager->write("[");
+    gAgentlogManager->flush();
+    std::string specMessage = "";
     
     for ( int i = 0 ; i != gNbOfRobots ; i++ )
     {
@@ -188,12 +228,62 @@ void TemplateEEWorldObserver::monitorPopulation( bool localVerbose )
                 minFitness = ctl->getFitness();
             if ( ctl->getFitness() > maxFitness )
                 maxFitness = ctl->getFitness();
+
+            //tracking pucks
+            //Format: (Red Collected, Green Collected)
+            if( ctl->getRed() > maxRed[0]  || (ctl->getRed() == maxRed[0] && ctl->getGreen() < maxRed[1]) ){
+                maxRed[0] = ctl->getRed(); 
+                maxRed[1] = ctl->getGreen();
+            }
+            if( ctl->getRed() < minRed[0]  || (ctl->getRed() == minRed[0] && ctl->getGreen() > minRed[1]) ){
+                minRed[0] = ctl->getRed(); 
+                minRed[1] = ctl->getGreen();
+            }
+            if ( ctl->getGreen() > maxGreen[1]  || (ctl->getGreen() == maxGreen[1] && ctl->getRed() < maxGreen[0]) ){
+                maxGreen[0] = ctl->getRed();
+                maxGreen[1] = ctl->getGreen();
+            }
+            if( ctl->getGreen() < minGreen[1]  || (ctl->getGreen() == minGreen[1] && ctl->getRed() > minGreen[0]) ){
+                minGreen[0] = ctl->getRed(); 
+                minGreen[1] = ctl->getGreen();
+            }
+
+            avgSpeed += ctl->getSpec();
+            totalRed += ctl->getAbsRed();
+            totalGreen += ctl->getAbsGreen();
+            if (ctl->getAbsGreen() == 0 && ctl->getAbsRed() == 0){
+                avgSpec += 0;
+            }
+            else{
+                avgSpec += std::max(ctl->getAbsRed(), ctl->getAbsGreen()) / (ctl->getAbsRed() + ctl->getAbsGreen());
+            }
         }
+
+            //DEBUG: for some reason we're writing nans
+        double spec;
+        if (ctl->getRed() == 0 && ctl->getGreen()==0)
+            spec = -1; //deal with these datapoints later
+        else
+            spec = ( ctl->getRed() / (ctl->getRed() + ctl->getGreen()) );
+
+        gAgentlogManager->write("(" + std::to_string(spec) +  "," + std::to_string(ctl->getRed() + ctl->getGreen()) + "," + 
+            std::to_string(ctl->getWorldModel()->_xReal) + "," + std::to_string(ctl->getWorldModel()->_yReal) + "," + std::to_string(ctl->getWorldModel()->isAlive()) + ")");
+        if (i != gNbOfRobots - 1)
+            gAgentlogManager->write(",");
+        gAgentlogManager->flush();
+        
     }
+    avgSpec /= activeCount;
+    gAgentlogManager->write("]\n");
+    gAgentlogManager->flush();
     
     if ( gVerbose && localVerbose )
     {
-        std::cout << "[ gen:" << (gWorld->getIterations()/TemplateEESharedData::gEvaluationTime) << "\tit:" << gWorld->getIterations() << "\tpop:" << activeCount << "\tminFitness:" << minFitness << "\tmaxFitness:" << maxFitness << "\tavgFitnessNormalized:" << sumOfFitnesses/activeCount << " ]\n";
+        std::cout << "\nGeneration: " << (gWorld->getIterations()/TemplateEESharedData::gEvaluationTime) << "\t(Iteration " <<  gWorld->getIterations() << ")\n";
+        std::cout << "[ pop:" << activeCount << "\tminFitness:" << minFitness << "\tmaxFitness:" << maxFitness << "\tavgFitnessNormalized:" << sumOfFitnesses/activeCount << " ]\n"; 
+        std::cout << "[ maxRed: ( r:" << maxRed[0] << " , g:" << maxRed[1] << " ) \tminRed: ( r:" << minRed[0] << " , g:" << minRed[1] << " )\tmaxGreen: ( r:" << maxGreen[0] << " , g:" << maxGreen[1] << " ) \tminGreen: ( r:" << minGreen[0] << " , g:" << minGreen[1] << " ) ]\n";
+        std::cout << "Total Red: " << totalRed << "\tTotal Green: " << totalGreen << "\n";
+        //std::cout << "maxGreen: (" << maxGreen[0] << "," << maxGreen[1] << ") \tminGreen: (" << minGreen[0] << "," << minGreen[1] << ") ]\n\n";
     }
     
     // display lightweight logs for easy-parsing
@@ -213,6 +303,24 @@ void TemplateEEWorldObserver::monitorPopulation( bool localVerbose )
     gLitelogManager->write(sLitelog);
     gLitelogManager->flush();  // flush internal buffer to file
     gLitelogFile << std::endl; // flush file output (+ "\n")
+
+
+    avgSpeed /= activeCount;
+    // display pucks logs for easy-parsing
+    std::string sPuckslog =
+        std::to_string(gWorld->getIterations()/TemplateEESharedData::gEvaluationTime)
+        + " "
+        + std::to_string(totalRed)
+        + " "
+        + std::to_string(totalGreen)
+        + " "
+        + std::to_string(avgSpec)
+        + " "
+        + std::to_string(activeCount);
+
+    gPuckslogManager->write(sPuckslog);
+    gPuckslogManager->flush();  // flush internal buffer to file
+    gPucksFile << std::endl; // flush file output (+ "\n")
     
     // Logging, population-level: alive
     std::string sLog = std::string("") + std::to_string(gWorld->getIterations()) + ",pop,alive," + std::to_string(activeCount) + "\n";

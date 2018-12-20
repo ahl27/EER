@@ -5,6 +5,9 @@
 #include "Config/TemplateEEConfigurationLoader.h"
 #include "Config/TemplateVanillaEEConfigurationLoader.h"
 #include "Config/TemplateMedeaConfigurationLoader.h"
+#include "Config/testProjectConfigurationLoader.h"
+#include "Config/crossoverConfigurationLoader.h"
+#include "Config/pucks_vanillaConfigurationLoader.h"
 //###DO-NOT-DELETE-THIS-LINE###TAG:INCLUDE###//
 
 
@@ -58,6 +61,24 @@ ConfigurationLoader* ConfigurationLoader::make_ConfigurationLoader (std::string 
 	else if (configurationLoaderObjectName == "TemplateMedeaConfigurationLoader" )
 	{
 		return new TemplateMedeaConfigurationLoader();
+	}
+#endif
+#if defined PRJ_TESTPROJECT || !defined MODULAR
+	else if (configurationLoaderObjectName == "testProjectConfigurationLoader" )
+	{
+		return new testProjectConfigurationLoader();
+	}
+#endif
+#if defined PRJ_CROSSOVER || !defined MODULAR
+	else if (configurationLoaderObjectName == "crossoverConfigurationLoader" )
+	{
+		return new crossoverConfigurationLoader();
+	}
+#endif
+#if defined PRJ_PUCKS_VANILLA || !defined MODULAR
+	else if (configurationLoaderObjectName == "pucks_vanillaConfigurationLoader" )
+	{
+		return new pucks_vanillaConfigurationLoader();
 	}
 #endif
     //###DO-NOT-DELETE-THIS-LINE###TAG:SWITCH###//

@@ -1,0 +1,37 @@
+costs energy to pick up pucks (flat rate), energy given depends on specialization
+Investigate energy
+Look into crossover??
+look into incubation/dormancy
+
+Do more runs, write a quick plotter
+look into research question
+
+
+Possible Research Questions:
+-MONEE: very difficult to replicate
+-mEDEA:
+    -Measure impact of explicitly favoring exploration
+    -use mEDEA to explore a search space
+    --initialize pucks on entire search space
+    --replace every generation
+    --incentivize distance travelled
+    --run simulation on testbed, then randomly select certain number of agents and place in new environment
+    -Performance of algorithm on a real system with larger populations
+    --Previous investigations have only used small population sizes (5-20 robots)
+    --Measure performance in a larger system
+    --can probably use a set of RasPi Zeros, would have to design a minimal robot
+
+-VanillaEE:
+    -directly incentivize exploration
+    -extend VanillaEE algorithm to different environments
+    --previous experiment hypothesized reproductive isolation 
+    --measure impact of different puck distributions on specialization
+
+    -paper states further investigation could look into "very different behaviors"
+    --ex. green pucks can only be collected with front, red pucks only with back
+
+
+plot std dev too
+
+
+

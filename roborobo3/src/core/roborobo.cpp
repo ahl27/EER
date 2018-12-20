@@ -60,6 +60,7 @@
 #include "Utilities/Misc.h"
 
 #include "Config/GlobalConfigurationLoader.h"
+#include <limits>
 
 /* **************************
  * * global data definition *			// dont forget to modify header file if you add other global data
@@ -98,7 +99,6 @@ ExtendedProperties gProperties;
 bool gVideoRecording = false;
 bool gOutputImageFormat = false; // default: PNG. (if True: BMP)
 
-
 bool gTrajectoryMonitor = false;
 int gTrajectoryMonitorMode = 0;
 
@@ -111,6 +111,10 @@ bool gCustomSnapshot_showSensorRays = false;
 //filenames
 
 std::ofstream gLogFile;
+std::ofstream gPucksFile;
+std::ofstream gAgentFile;
+LogManager *gPuckslogManager = NULL;
+LogManager *gAgentlogManager = NULL;
 LogManager *gLogManager = NULL;
 
 bool gVerbose_commandlineargument =             false; // set to true if given as command line argument (priority over properties file)
@@ -120,6 +124,13 @@ std::string gLogDirectoryname =                 "logs";
 std::string gLogFilename =						"datalog.txt";
 std::string gLogFullFilename =                  ""; // cf. the initLog method
 
+std::string gPucksDirectoryname =               "pucksData";
+std::string gPucksFilename =                    "pucklog.txt";
+
+std::string gAgentDirectoryname =                "pucksData";
+std::string gAgentFilename =                     "agentlog.txt";
+//full filenames determined in TemplateEEWorldObserver.cpp, no need for declaration here
+
 std::string gRobotMaskImageFilename =			"data/agent-mask.png";
 std::string gRobotDisplayImageFilename =		"data/agent-mask.png";
 std::string gRobotSpecsImageFilename =			"data/agent-specs.png";
@@ -127,6 +138,9 @@ std::string gForegroundImageFilename =			"data/foreground.png";   // MANDATORY: 
 std::string gEnvironmentImageFilename =			"data/environment.png";
 std::string gBackgroundImageFilename =			"data/background.png";			
 std::string gFootprintImageFilename =           "data/ground.png";
+
+bool gMONEEConfig = false;
+
 
 //general purpose
 
@@ -181,6 +195,7 @@ int gNbOfLandmarks = 0;
 std::vector<LandmarkObject*> gLandmarks;
 
 int gNbOfPhysicalObjects = 0;
+int gNbOfRedPucks = 0;
 int gPhysicalObjectDefaultType = 0;
 int gPhysicalObjectDefaultRegrowTimeMax = -1;
 bool gPhysicalObjectDefaultRelocate = false;
@@ -194,6 +209,9 @@ int gPhysicalObjectDefaultSolid_w = 16;
 int gPhysicalObjectDefaultSolid_h = 16;
 int gPhysicalObjectDefaultSoft_w = 22;
 int gPhysicalObjectDefaultSoft_h = 22;
+int gPhysicalObjectSwitchGen = std::numeric_limits<int>::max();
+
+bool gSpecAffectsCollection = false;
 
 std::vector<PhysicalObject*> gPhysicalObjects;
 
@@ -209,6 +227,7 @@ int gEnergyItemDefaultMode = 0;
 
 int gNbOfRobots = 0;
 int gRobotIndexFocus = 0;
+double gSpecialization = 1.0;
 
 int gNumberOfRobotGroups = 1;
 
@@ -970,7 +989,6 @@ void initLogging()
     
     
     // init log file
-    
     gLogFullFilename = gLogDirectoryname + "/" + gLogFilename;
     
 	gLogFile.open(gLogFullFilename.c_str());//, std::ofstream::out | std::ofstream::app);
@@ -1259,6 +1277,16 @@ bool loadProperties( std::string __propertiesFilename )
 		std::cerr << "[MISSING] gNbOfPhysicalObjects value is missing.\n";
 		returnValue = false;
 	}
+
+    if ( gProperties.hasProperty("gNbOfRedPucks") )
+    {
+        convertFromString<int>(gNbOfRedPucks, gProperties.getProperty("gNbOfRedPucks"), std::dec);
+    }
+    else
+    {
+        std::cerr << "[MISSING] gNbOfRedPucks value is missing.\n";
+        returnValue = false;
+    }
     
     if ( gProperties.hasProperty("gPhysicalObjectDefaultRadius") )
 		convertFromString<int>(gPhysicalObjectDefaultRadius, gProperties.getProperty("gPhysicalObjectDefaultRadius"), std::dec);
@@ -1426,6 +1454,10 @@ bool loadProperties( std::string __propertiesFilename )
 
     gProperties.checkAndGetPropertyValue("gEnergyItemDefaultMode",&gEnergyItemDefaultMode,false);
 
+    gProperties.checkAndGetPropertyValue("gSpecAffectsCollection", &gSpecAffectsCollection, false);
+
+    gProperties.checkAndGetPropertyValue("gMONEEConfig", &gMONEEConfig, false);
+
 	if ( gProperties.hasProperty("gInitialNumberOfRobots") )
 		convertFromString<int>(gInitialNumberOfRobots, gProperties.getProperty("gInitialNumberOfRobots"), std::dec);
 	else
@@ -1433,6 +1465,14 @@ bool loadProperties( std::string __propertiesFilename )
 		std::cerr << "[MISSING] gInitialNumberOfRobots value is missing.\n";
 		returnValue = false;
 	}
+
+    if ( gProperties.hasProperty("gSpecialization") )
+        convertFromString<double>(gSpecialization, gProperties.getProperty("gSpecialization"), std::dec);
+    else
+    {
+        std::cerr << "[MISSING] gSpecialization value is missing. Assuming value of 1.0.\n";
+        gSpecialization = 1.0;
+    }
 	
 	if ( gProperties.hasProperty("gLocationFinderMaxNbOfTrials") )
 		convertFromString<int>(gLocationFinderMaxNbOfTrials, gProperties.getProperty("gLocationFinderMaxNbOfTrials"), std::dec);
@@ -1960,6 +2000,28 @@ bool loadProperties( std::string __propertiesFilename )
 		std::cout << "[WARNING] No default gLogFilename string value. Log data will be written in \"" << gLogFilename << "\"\n";
 		//returnValue = false;
 	}
+
+    if ( gProperties.hasProperty("gPucksFilename") )
+        gPucksFilename = gProperties.getProperty("gPucksFilename");
+    else
+    {
+        gPucksFilename = "pucklog_" + gStartTime + "_" + getpidAsReadableString() + ".txt";
+        gProperties.setProperty("gPucksFilename",gPucksFilename);
+
+        std::cout << "[WARNING] No default gDataPucksFilename string value. Log data will be written in \"" << gPucksFilename << "\"\n";
+        //returnValue = false;
+    }
+
+    if ( gProperties.hasProperty("gAgentFilename") )
+        gAgentFilename = gProperties.getProperty("gAgentFilename");
+    else
+    {
+        gAgentFilename = "agentlog_" + gStartTime + "_" + getpidAsReadableString() + ".txt";
+        gProperties.setProperty("gAgentFilename",gAgentFilename);
+
+        std::cout << "[WARNING] No default gAgentFilename string value. Log data will be written in \"" << gAgentFilename << "\"\n";
+        //returnValue = false;
+    }
 
     if ( gLogDirectoryname_commandlineargument == false ) // ignore if command line argument => overrules any properties file entry
     {

@@ -28,7 +28,8 @@ void TemplateEEAgentObserver::reset()
 void TemplateEEAgentObserver::step()
 {
     // * send callback messages to objects touched or walked upon.
-    
+    //_wm->_fitnessValue = _wm->_fitnessValue - 100;
+
     // through distance sensors
     for( int i = 0 ; i < _wm->_cameraSensorsNb; i++)
     {

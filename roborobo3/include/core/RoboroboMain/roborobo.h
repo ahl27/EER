@@ -57,8 +57,17 @@ extern bool gBatchMode_commandlineargument;
 extern std::string gLogDirectoryname;
 extern std::string gLogFilename;
 extern std::string gLogFullFilename;
+extern std::string gPucksDirectoryname;
+extern std::string gPucksFilename;
+extern std::string gAgentDirectoryname;
+extern std::string gAgentFilename;
 
+
+extern std::ofstream gPucksFile;
+extern std::ofstream gAgentFile;
 extern std::ofstream gLogFile;
+extern LogManager *gPuckslogManager;
+extern LogManager *gAgentlogManager;
 extern LogManager *gLogManager;
 
 extern std::string gRobotMaskImageFilename;
@@ -96,6 +105,7 @@ extern std::vector<bool> gRobotsRegistry;
 
 extern int	gInitialNumberOfRobots;			// number of robots that should be created at start-up
 extern int	gNbOfRobots;	    // actual number of robots existing in the simulation right now
+extern double gSpecialization;
 extern int	gRobotIndexFocus;		// focused robot id.
 
 extern int gNumberOfRobotGroups;     // number of different robot types/families (default: 1)
@@ -116,6 +126,8 @@ extern bool gRadioNetwork;			// update radio network.
 #define SENSOR_RAY_CONTACT_GREEN 192
 #define SENSOR_RAY_CONTACT_BLUE 192
 
+extern bool gMONEEConfig;
+
 extern int gDisplaySensors; // display sensor rays on screen (0:no,1:if-contact,2:always+red,3:always)
 extern bool gDisplayTail; // display tail on screen (back of robot)
 extern bool gRobotLEDdisplay; // display LED status (RGB) on top of the robot
@@ -133,6 +145,7 @@ extern int gNbOfLandmarks;
 extern std::vector<LandmarkObject*> gLandmarks; // list of inanimate objects (landmarks).
 
 extern int gNbOfPhysicalObjects;
+extern int gNbOfRedPucks;
 extern int gPhysicalObjectDefaultType;
 extern int gPhysicalObjectDefaultRegrowTimeMax;
 extern bool gPhysicalObjectDefaultRelocate;
@@ -149,6 +162,8 @@ extern int gPhysicalObjectDefaultSoft_h;
 
 extern std::vector<PhysicalObject*> gPhysicalObjects; // list of inanimate objects (landmarks).
 extern bool gPhysicalObjectsRedraw;
+
+extern bool gSpecAffectsCollection;
 
 extern bool gEnergyLevel; // energy level exists? yes/no
 extern double gEnergyMax; //! maximum energy given -- used for initialization, revive and max threshold

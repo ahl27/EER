@@ -32,6 +32,12 @@ RobotWorldModel::RobotWorldModel() : _cameraSensors ( boost::extents[12][7] )
     
     _desiredTranslationalValue = 0;
     _desiredRotationalVelocity = 0;
+
+    _redPucks = 0;
+    _greenPucks = 0;
+    _absRed = 0;
+    _absGreen = 0;
+    _specialization = 0.5;
 }
 
 RobotWorldModel::~RobotWorldModel()

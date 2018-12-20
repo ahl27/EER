@@ -41,13 +41,15 @@ CircleObject::CircleObject( int __id ) : PhysicalObject( __id ) // a unique and 
     double x = 0.0, y = 0.0;
     x = getXCenterPixel();
 	y = getYCenterPixel();
+
+    std::cout << x << " , " << y << std::endl;
     
     int tries = 0;
     bool randomLocation = false;
 
     if ( x == -1.0 || y == -1.0 )
     {
-        tries = tries + findRandomLocation();
+        tries = tries + findRandomLocation(x, y);
         randomLocation = true;
     }
     else

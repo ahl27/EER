@@ -7,10 +7,17 @@
 #include "RoboroboMain/roborobo.h"
 #include "Utilities/Misc.h"
 #include "World/World.h"
+#include <iostream>
+#include "TemplateEE/include/TemplateEESharedData.h"
 
 PhysicalObject::PhysicalObject( int __id ) // a unique and consistent __id should be given as argument
 {
     _id = __id;
+    _initXmax = gPhysicalObjectsInitAreaWidth;
+    _initXmin = 0;
+    _initYmax = gPhysicalObjectsInitAreaHeight; 
+    _initYmin = 0;
+    _customInit = false;
     init();
 }
 
@@ -108,6 +115,7 @@ void PhysicalObject::init()
     s = "physicalObject[";
 	s += out.str();
 	s += "].x";
+    
 	if ( gProperties.hasProperty( s ) )
 	{
 		convertFromString<double>(x, gProperties.getProperty( s ), std::dec);
@@ -128,22 +136,100 @@ void PhysicalObject::init()
 	{
         y = -1.0;
 	}
+
+    /*
+    Additional arguments to set initArea for each object
+    */
+    s = "physicalObject[";
+    s += out.str();
+    s +=  "].ixmax";
+    if ( gProperties.hasProperty( s ) )
+    {
+        convertFromString<double>(_initXmax, gProperties.getProperty( s ), std::dec);
+        _customInit = true;
+    }
+
+    s = "physicalObject[";
+    s += out.str();
+    s +=  "].ixmin";
+    if ( gProperties.hasProperty( s ) )
+    {
+        convertFromString<double>(_initXmin, gProperties.getProperty( s ), std::dec);
+        _customInit = true;
+    }
+
+    s = "physicalObject[";
+    s += out.str();
+    s +=  "].iymax";
+    if ( gProperties.hasProperty( s ) )
+    {
+        convertFromString<double>(_initYmax, gProperties.getProperty( s ), std::dec);
+        _customInit = true;
+    }
+
+
+    s = "physicalObject[";
+    s += out.str();
+    s +=  "].iymin";
+    if ( gProperties.hasProperty( s ) )
+    {
+        convertFromString<double>(_initYmin, gProperties.getProperty( s ), std::dec);
+        _customInit = true;
+    }
+
+
+    if ( gProperties.hasProperty("gPhysicalObjectSwitchGen") )
+    {
+        s = gProperties.hasProperty("gPhysicalObjectSwitchGen");
+        convertFromString<int>(_switchGen, gProperties.getProperty("gPhysicalObjectSwitchGen"), std::dec);
+    }
+    else
+    {
+        _switchGen = 100000;
+    }    
     
     setCoordinates( x, y );
 }
 
-int PhysicalObject::findRandomLocation( )
+int PhysicalObject::findRandomLocation( double ix /* =-1 */, double iy /* =-1 */)
 {
+    /*
+    CURRENT: Initialization working sorta correctly, respawning still random
+    TODO: Make random spawn after collection work according to smart_xy()
+    */
     double x = 0.0, y = 0.0;
     
     int tries = 0;
+
+    int gen = gWorld->getIterations()/TemplateEESharedData::gEvaluationTime;
+    //std::cout << gen << std::endl;
     
     do {
-        x = ( randint() % ( gPhysicalObjectsInitAreaWidth  ) ) + gPhysicalObjectsInitAreaX;
-        y = ( randint() % ( gPhysicalObjectsInitAreaHeight ) ) + gPhysicalObjectsInitAreaY;
-        
-        //x = (randint() % (gAreaWidth-20)) + 10;  // deprecated
-        //y = (randint() % (gAreaHeight-20)) + 10; // deprecated
+        //random and constant initialization
+        if (!_customInit || gen > _switchGen)
+        {
+            x = ( randint() % ( gPhysicalObjectsInitAreaWidth  ) ) + gPhysicalObjectsInitAreaX;
+            y = ( randint() % ( gPhysicalObjectsInitAreaHeight ) ) + gPhysicalObjectsInitAreaY;
+            
+            //x = (randint() % (gAreaWidth-20)) + 10;  // deprecated
+            //y = (randint() % (gAreaHeight-20)) + 10; // deprecated
+
+            //place element at the determined spot
+            //if full, place it one space right/down
+            //9 is the radius of one object
+            if (ix != -1)
+                x = ix + tries*9;
+            if (iy != -1)
+                y = iy + tries*9;
+        }
+
+        //custom distribution initialization
+        else 
+        {
+            //TODO: find a smart way to do this
+            x = ( randint() % (int(_initXmax - _initXmin)) ) + int(_initXmin);
+            y = ( randint() % (int(_initYmax - _initYmin)) ) + int(_initYmin);
+        }
         
         setCoordinates( x, y );
         

@@ -16,6 +16,7 @@ extern int gSensorRange;
 
 #include "WorldModels/WorldModel.h"
 #include "RoboroboMain/common.h"
+#include "RoboroboMain/roborobo.h"
 
 class World;
 
@@ -83,7 +84,7 @@ public:
     double _desiredRotationalVelocity;
     double _desiredTranslationalValue;
     
-    // delta values that where *actually* executed (ie. may differ if crash occurs)
+    // delta values that were *actually* executed (ie. may differ if crash occurs)
     double _actualRotationalVelocity;
     double _actualTranslationalValue; // value is equal to _agentAbsoluteLinearSpeed
     
@@ -99,6 +100,11 @@ public:
     int _generation;
 	
     double _fitnessValue; // optional
+    double _redPucks;
+    double _greenPucks;
+    double _absRed;
+    double _absGreen;
+    double _specialization;
     
 	// * Initializes the variables
     RobotWorldModel();
@@ -208,6 +214,9 @@ public:
     }
     void addEnergy( double __value )
     {
+        if (gMONEEConfig)
+            __value *= _specialization;
+
         _energyLevel += __value;
         if ( _energyLevel > gEnergyMax )
             _energyLevel = gEnergyMax;

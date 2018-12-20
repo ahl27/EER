@@ -44,6 +44,8 @@ protected:
     void selectFirstGenome();
     void selectBestGenome();
     void selectFitProp();
+    void selectFitMONEE();
+    //void selectFitMONEE_old();
     
     void mutateGaussian( float sigma );
     void mutateUniform();
@@ -73,7 +75,8 @@ protected:
     std::map< std::pair<int,int>, std::vector<double> > _genomesList;
     std::map< std::pair<int,int>, float > _sigmaList;
     std::map< std::pair<int,int>, float > _fitnessValuesList;
-    
+    std::map< std::pair<int,int>, std::pair<double, double> > _pucksRedGreen;
+    std::map< std::pair<int,int>, RobotWorldModel* > _robotList;
     // current genome
     
     std::vector<double> _currentGenome;
@@ -92,7 +95,8 @@ protected:
     double _Yinit;
     double _dSumTravelled;
     
-    bool storeGenome(std::vector<double> genome, std::pair<int,int> senderId, float sigma, float fitness=0);
+    bool storeGenome_old(std::vector<double> genome, std::pair<int,int> senderId, float sigma, float fitness=0);
+    bool storeGenome(std::vector<double> genome, std::pair<int,int> senderId, float sigma, float fitness=0, std::pair<double,double> redGreenPucks=std::make_pair(0,0));
     void reset();
     
     void clearReservoir(); // clear genomesList, sigmaList, fitnessesList and birthdayList
@@ -117,8 +121,14 @@ public:
     int getBirthdate() { return _birthdate; }
     
     bool isListening() { return _isListening; }
+
+    virtual double getSpec();
     
     virtual double getFitness();
+    virtual double getRed();
+    virtual double getGreen();
+    virtual double getAbsRed();
+    virtual double getAbsGreen();
 
     
 };

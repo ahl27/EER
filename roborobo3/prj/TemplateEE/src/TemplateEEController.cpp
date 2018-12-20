@@ -13,6 +13,7 @@
 #include <neuralnetworks/Perceptron.h>
 #include <neuralnetworks/Elman.h>
 #include "Utilities/Misc.h"
+#include <cmath>
 
 using namespace Neural;
 
@@ -51,7 +52,7 @@ TemplateEEController::TemplateEEController( RobotWorldModel *wm )
     resetFitness();
     
     _wm->setAlive(true);
-    _wm->setRobotLED_colorValues(255, 0, 0);
+    _wm->setRobotLED_colorValues(0, 0, 255);
     
 }
 
@@ -477,11 +478,13 @@ void TemplateEEController::selectFirstGenome()  // if called, assume genomeList.
 
 void TemplateEEController::selectBestGenome()
 {
+    //all abs added later
+    //line nos: 487, 496, 498, 500, 521
     std::pair<int,int> bestId;
     
     std::map<std::pair<int,int>, float >::iterator fitnessesIt = _fitnessValuesList.begin();
     
-    float bestFitnessValue = (*fitnessesIt).second;
+    float bestFitnessValue = abs((*fitnessesIt).second);
     bestId = (*fitnessesIt).first;
     
     ++fitnessesIt;
@@ -490,11 +493,11 @@ void TemplateEEController::selectBestGenome()
     
     for ( int i = 1 ; fitnessesIt != _fitnessValuesList.end(); ++fitnessesIt, i++)
     {
-        if ( (*fitnessesIt).second >= bestFitnessValue )
+        if ( abs((*fitnessesIt).second) >= bestFitnessValue )
         {
-            if ( (*fitnessesIt).second > bestFitnessValue )
+            if ( abs((*fitnessesIt).second) > bestFitnessValue )
             {
-                bestFitnessValue = (*fitnessesIt).second;
+                bestFitnessValue = abs((*fitnessesIt).second);
                 bestId = (*fitnessesIt).first;
                 nbSimilar = 0;
             }
@@ -515,7 +518,7 @@ void TemplateEEController::selectBestGenome()
             fitnessesIt = _fitnessValuesList.begin();
             for ( int i = 0 ; ; ++fitnessesIt, i++)
             {
-                if ( (*fitnessesIt).second == bestFitnessValue )
+                if ( abs((*fitnessesIt).second) == bestFitnessValue )
                 {
                     if ( count == randomPick )
                     {
@@ -528,6 +531,7 @@ void TemplateEEController::selectBestGenome()
         }
     }
     
+    //std::cout << bestId.first << "," << bestId.second << std::endl;
     _birthdate = gWorld->getIterations();
     
     _currentGenome = _genomesList[bestId];
@@ -572,7 +576,6 @@ void TemplateEEController::selectFitProp()
     }
     
     // update current genome with selected parent (mutation will be done elsewhere)
-    
     _birthdate = gWorld->getIterations();
     
     _currentGenome = _genomesList[selectId];
@@ -581,11 +584,233 @@ void TemplateEEController::selectFitProp()
     setNewGenomeStatus(true);
 }
 
+void TemplateEEController::selectFitMONEE() 
+{
+    std::pair<int,int> bestId;
+    
+    // compute sum of fitness
+    
+    float totalRed = 0;
+    float totalGreen = 0;
+    
+    std::map< std::pair<int,int>, std::pair<double,double> >::iterator pucksIt = _pucksRedGreen.begin();
+    
+    //calculate exchange rates for pucks
+    for ( ; pucksIt != _pucksRedGreen.end(); ++pucksIt )
+    {
+        totalRed += (*pucksIt).second.first;
+        totalGreen += (*pucksIt).second.second;
+    }
+
+    float exchangerate_red; 
+    float exchangerate_green;
+    if (totalRed == 0)
+        exchangerate_red = 0;
+    else
+        exchangerate_red = (totalRed + totalGreen) / totalRed;
+
+    if (totalGreen == 0){
+        exchangerate_green = 0;
+    }
+    else {
+        exchangerate_green = (totalRed + totalGreen) / totalGreen;
+    }
+
+    //find best fitness value, weighting the pucks collected by exchange rate
+    pucksIt = _pucksRedGreen.begin();
+    
+
+    
+    int nbSimilar = 0;
+    float curFitness = -1;
+
+    int red = (*pucksIt).second.first;
+    int green = (*pucksIt).second.second;
+    float bestFitnessValue = (exchangerate_green * green) + (exchangerate_red * red);
+    bestId = (*pucksIt).first;
+ 
+    ++pucksIt;
+
+    for ( int i = 1 ; pucksIt != _pucksRedGreen.end(); ++pucksIt, i++ )
+    {
+        red = (*pucksIt).second.first;
+        green = (*pucksIt).second.second;
+        curFitness = (exchangerate_green * green) + (exchangerate_red * red);
+
+        if ( curFitness >= bestFitnessValue )
+        {
+            if ( curFitness > bestFitnessValue )
+            {
+                bestFitnessValue = curFitness;
+                bestId = (*pucksIt).first;
+                nbSimilar = 0;
+            }
+            else
+            {
+                nbSimilar++;
+            }
+        }
+    }
+    
+    if ( nbSimilar > 0 ) // >1 genomes have the same fitness best value. Pick randomly among them
+    {
+        int count = 0;
+        int randomPick = randint() % ( nbSimilar + 1 );
+        
+        if ( randomPick != 0 ) // not already stored (i.e. not the first one)
+        {
+            pucksIt = _pucksRedGreen.begin();
+            for ( int i = 0 ; ; ++pucksIt, i++)
+            {
+                red = (*pucksIt).second.first;
+                green = (*pucksIt).second.second;
+                curFitness = (exchangerate_green * green) + (exchangerate_red * red);
+
+                if ( curFitness == bestFitnessValue )
+                {
+                    if ( count == randomPick )
+                    {
+                        bestId = (*pucksIt).first;
+                        break;
+                    }
+                    count++;
+                }
+            }
+        }
+    }
+
+    _birthdate = gWorld->getIterations();
+    
+    _currentGenome = _genomesList[bestId];
+    _currentSigma = _sigmaList[bestId];
+    
+    setNewGenomeStatus(true);
+
+}
+
+/*
+void TemplateEEController::selectFitMONEE_old() 
+{
+    std::pair<int,int> bestId;
+    
+    // compute sum of fitness
+    
+    float totalRed = 0;
+    float totalGreen = 0;
+    
+    std::map< std::pair<int,int>, RobotWorldModel* >::iterator wmIterator = _robotList.begin();
+    
+    //calculate exchange rates for pucks
+    for ( ; wmIterator != _robotList.end(); ++wmIterator )
+    {
+        totalRed += (*wmIterator).second->_redPucks;
+        totalGreen += (*wmIterator).second->_greenPucks;
+    }
+
+    float exchangerate_red = (totalRed + totalGreen) / totalRed;
+    float exchangerate_green = (totalRed + totalGreen) / totalGreen;
+
+    //find best fitness value, weighting the pucks collected by exchange rate
+    wmIterator = _robotList.begin();
+    
+
+    
+    int nbSimilar = 0;
+    RobotWorldModel *wm;
+    float curFitness = -1;
+
+    wm = (*wmIterator).second;
+    float bestFitnessValue = (exchangerate_green * wm->_greenPucks) + (exchangerate_red * wm->_redPucks);
+    bestId = (*wmIterator).first;
+ 
+    ++wmIterator;
+
+    for ( int i = 1 ; wmIterator != _robotList.end(); ++wmIterator, i++ )
+    {
+        wm = (*wmIterator).second;
+        curFitness = (exchangerate_green * wm->_greenPucks) + (exchangerate_red * wm->_redPucks);
+
+        if ( curFitness >= bestFitnessValue )
+        {
+            if ( curFitness > bestFitnessValue )
+            {
+                bestFitnessValue = curFitness;
+                bestId = (*wmIterator).first;
+                nbSimilar = 0;
+            }
+            else
+            {
+                nbSimilar++;
+            }
+        }
+    }
+    
+    if ( nbSimilar > 0 ) // >1 genomes have the same fitness best value. Pick randomly among them
+    {
+        int count = 0;
+        int randomPick = randint() % ( nbSimilar + 1 );
+        
+        if ( randomPick != 0 ) // not already stored (i.e. not the first one)
+        {
+            wmIterator = _robotList.begin();
+            for ( int i = 0 ; ; ++wmIterator, i++)
+            {
+                wm = (*wmIterator).second;
+                curFitness = (exchangerate_green * wm->_greenPucks) + (exchangerate_red * wm->_redPucks);
+
+                if ( curFitness == bestFitnessValue )
+                {
+                    if ( count == randomPick )
+                    {
+                        bestId = (*wmIterator).first;
+                        break;
+                    }
+                    count++;
+                }
+            }
+        }
+    }
+    std::cout << bestFitnessValue << std::endl;
+
+    _birthdate = gWorld->getIterations();
+    
+    _currentGenome = _genomesList[bestId];
+    _currentSigma = _sigmaList[bestId];
+    
+    setNewGenomeStatus(true);
+}
+*/
+
 /* manage storage of a genome received from a neighbour
  *
  * Note that in case of multiple encounters with the same robot (same id, same "birthdate"), genome is stored only once, and last known fitness value is stored (i.e. updated at each encounter).
  */
-bool TemplateEEController::storeGenome(std::vector<double> genome, std::pair<int,int> senderId, float sigma, float fitness) // fitness is optional (default: 0)
+bool TemplateEEController::storeGenome_old(std::vector<double> genome, std::pair<int,int> senderId, float sigma, float fitness) // fitness is optional (default: 0)
+{
+    if ( !_isListening )
+    {
+        return false; // current agent is not listening: do nothing.
+    }
+    else
+    {
+        std::map<std::pair<int,int>, std::vector<double> >::const_iterator it = _genomesList.find(senderId);
+        
+        if ( it != _genomesList.end() ) // this exact agent's genome is already stored. Exact means: same robot, same generation. Then: update fitness value (the rest in unchanged)
+        {
+            _fitnessValuesList[senderId] = fitness; // update with most recent fitness (IMPLEMENTATION CHOICE) [!n]
+            return false;
+        }
+        else
+        {
+            _genomesList[senderId] = genome;
+            _sigmaList[senderId] = sigma;
+            _fitnessValuesList[senderId] = fitness;
+            return true;
+        }
+    }
+}
+
+bool TemplateEEController::storeGenome(std::vector<double> genome, std::pair<int,int> senderId, float sigma, float fitness, std::pair<double,double> redGreenPucks) // fitness is optional (default: 0)
 {
     if ( !_isListening )
     {
@@ -604,6 +829,7 @@ bool TemplateEEController::storeGenome(std::vector<double> genome, std::pair<int
         if ( it != _genomesList.end() ) // this exact agent's genome is already stored. Exact means: same robot, same generation. Then: update fitness value (the rest in unchanged)
         {
             _fitnessValuesList[senderId] = fitness; // update with most recent fitness (IMPLEMENTATION CHOICE) [!n]
+            _pucksRedGreen[senderId] = redGreenPucks;
             return false;
         }
         else
@@ -611,6 +837,8 @@ bool TemplateEEController::storeGenome(std::vector<double> genome, std::pair<int
             _genomesList[senderId] = genome;
             _sigmaList[senderId] = sigma;
             _fitnessValuesList[senderId] = fitness;
+            _pucksRedGreen[senderId] = redGreenPucks;
+            //_robotList[senderId] = robot;
             return true;
         }
     }
@@ -728,6 +956,8 @@ void TemplateEEController::clearReservoir()
     _genomesList.clear(); // empty the list of received genomes
     _sigmaList.clear();
     _fitnessValuesList.clear();
+    //_robotList.clear();
+    _pucksRedGreen.clear();
 }
 
 void TemplateEEController::reset()
@@ -787,7 +1017,8 @@ void TemplateEEController::broadcastGenome()
             
             if ( targetRobotController->isListening() )
             {
-                bool success = targetRobotController->storeGenome(_currentGenome, std::make_pair(_wm->getId(), _birthdate), _currentSigma, _wm->_fitnessValue); // other agent stores my genome. Contaminant stragegy. Note that medea does not use fitnessValue (default value: 0)
+                bool success = targetRobotController->storeGenome(_currentGenome, std::make_pair(_wm->getId(), _birthdate), _currentSigma, _wm->_fitnessValue, 
+                                                std::make_pair(_wm->_redPucks, _wm->_greenPucks)); // other agent stores my genome. Contaminant stragegy. Note that medea does not use fitnessValue (default value: 0)
                 
                 if ( success == true )
                     _nbGenomeTransmission++; // count unique transmissions (ie. nb of different genomes stored).
@@ -811,6 +1042,9 @@ void TemplateEEController::performSelection() // called only if at least 1 genom
             break;
         case 3:
             selectFitProp();
+            break;
+        case 4:
+            selectFitMONEE();
             break;
         default:
             std::cerr << "[ERROR] unknown selection method (gSelectionMethod = " << TemplateEESharedData::gSelectionMethod << ")\n";
@@ -967,12 +1201,40 @@ double TemplateEEController::getFitness()
     return _wm->_fitnessValue;
 }
 
+double TemplateEEController::getRed()
+{
+    return _wm->_redPucks;
+}
+
+double TemplateEEController::getGreen()
+{
+    return _wm->_greenPucks;
+}
+
+double TemplateEEController::getAbsRed()
+{
+    return _wm->_absRed;
+}
+
+double TemplateEEController::getAbsGreen()
+{
+    return _wm->_absGreen;
+}
+
+double TemplateEEController::getSpec()
+{
+    return _wm->_specialization;
+}
 /*
  * note: resetFitness is first called by the Controller's constructor.
  */
 void TemplateEEController::resetFitness()
 {
     _wm->_fitnessValue = 0;
+    _wm->_redPucks = 0;
+    _wm->_greenPucks = 0;
+    _wm->_absRed = 0;
+    _wm->_absGreen = 0;
 }
 
 void TemplateEEController::updateFitness()
